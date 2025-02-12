@@ -2,7 +2,7 @@ local active = true
 local trueActive = true
 local reachType = "Sphere"
 local dmgEnabled = true
-local visualizerEnabled = true
+local visualizerEnabled = false
 
 local visualizer = Instance.new("Part")
 visualizer.BrickColor = BrickColor.Blue()
