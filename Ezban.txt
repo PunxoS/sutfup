@@ -18,7 +18,7 @@ local function adjustToolSizeForOthers()
                         -- Check if the tool has a handle and set its size
                         local handle = tool:FindFirstChild("Handle")
                         if handle then
-                            handle.Size = Vector3.new(10, 10, 10)
+                            handle.Size = Vector3.new(3, 3, 3)
                         end
                     end
                 end
