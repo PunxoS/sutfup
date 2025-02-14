@@ -1,24 +1,24 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-local function onToolEquipped(tool, player)
-    if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
-        local handle = tool.Handle
-        -- Move only other players' tool handles 50 studs underground
-        handle.Position = handle.Position - Vector3.new(0, 50, 0)
-    end
-end
-
-local function onCharacterAdded(character)
-    local player = Players:GetPlayerFromCharacter(character)
-    if player and player ~= game:GetService("RunService"):GetRunMode() then
-        character.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") then
-                onToolEquipped(child, player)
+local function moveHandles()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character then
+            for _, tool in ipairs(player.Character:GetChildren()) do
+                if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+                    local handle = tool.Handle
+                    -- Move only other players' tool handles 50 studs underground
+                    handle.Position = handle.Position - Vector3.new(0, 50, 0)
+                end
             end
-        end)
+        end
     end
 end
 
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(onCharacterAdded)
+-- Run the function every 0.5 seconds
+task.spawn(function()
+    while true do
+        moveHandles()
+        task.wait(0.5) -- Wait 0.5 seconds before running again
+    end
 end)
