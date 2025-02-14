@@ -1,0 +1,28 @@
+local Players = game:GetService("Players")
+
+local function resizeHandle(tool, player)
+    if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+        local handle = tool.Handle
+
+        -- Check if it's the local player's tool, if not, resize the handle
+        if player ~= Players.LocalPlayer then
+            local originalSize = handle.Size
+            handle.Size = originalSize + Vector3.new(15, 15, 15)
+        end
+    end
+end
+
+local function onCharacterAdded(character)
+    local player = Players:GetPlayerFromCharacter(character)
+    if player then
+        character.ChildAdded:Connect(function(child)
+            if child:IsA("Tool") then
+                resizeHandle(child, player)
+            end
+        end)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(onCharacterAdded)
+end)
