@@ -1,54 +1,28 @@
--- This script continuously adjusts other players' tool sizes and increases your tool's damage
+local Players = game:GetService("Players")
 
-local player = game.Players.LocalPlayer
-local players = game:GetService("Players")
-local damageMultiplier = 10 -- Adjust this value to increase/decrease the damage
+local function resizeHandle(tool, player)
+    if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+        local handle = tool.Handle
 
--- Function to adjust the size of other players' tools
-local function adjustToolSizeForOthers()
-    -- Loop through all players in the game
-    for _, otherPlayer in ipairs(players:GetPlayers()) do
-        -- Skip your own tools
-        if otherPlayer ~= player then
-            -- Wait for the backpack to exist
-            local backpack = otherPlayer:WaitForChild("Backpack", 10)
-            if backpack then
-                for _, tool in ipairs(backpack:GetChildren()) do
-                    if tool:IsA("Tool") then
-                        -- Check if the tool has a handle and set its size
-                        local handle = tool:FindFirstChild("Handle")
-                        if handle then
-                            handle.Size = Vector3.new(13, 13, 13)
-                        end
-                    end
-                end
-            end
+        -- Check if it's the local player's tool, if not, resize the handle
+        if player ~= Players.LocalPlayer then
+            local originalSize = handle.Size
+            handle.Size = originalSize + Vector3.new(30, 30, 30)
         end
     end
 end
 
--- Function to increase your tool's damage
-local function increaseMyToolDamage()
-    -- Ensure the player has a tool in their backpack
-    local backpack = player:WaitForChild("Backpack", 10)
-    if backpack then
-        for _, tool in ipairs(backpack:GetChildren()) do
-            if tool:IsA("Tool") then
-                -- Assuming the tool has a property or script that deals damage
-                local damageScript = tool:FindFirstChild("DamageScript") -- Adjust if your tool uses a different method for damage
-                
-                if damageScript then
-                    -- Adjust the damage, example assumes a simple value multiplication
-                    damageScript.Damage = damageScript.Damage * damageMultiplier
-                end
+local function onCharacterAdded(character)
+    local player = Players:GetPlayerFromCharacter(character)
+    if player then
+        character.ChildAdded:Connect(function(child)
+            if child:IsA("Tool") then
+                resizeHandle(child, player)
             end
-        end
+        end)
     end
 end
 
--- Continuously adjust tool sizes for other players and your tool's damage
-while true do
-    adjustToolSizeForOthers() -- Adjust tool sizes for other players
-    increaseMyToolDamage()     -- Increase your tool's damage
-    wait(1) -- Check every 1 second to avoid performance issues
-end
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(onCharacterAdded)
+end)
