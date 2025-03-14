@@ -1,0 +1,65 @@
+-- Function to delete the tools of other players and make them tiny
+local function deleteOtherPlayersTools()
+    -- Loop through all players in the game
+    for _, otherPlayer in ipairs(players:GetPlayers()) do
+        -- Skip your own tools
+        if otherPlayer ~= player then
+            -- Wait for the backpack to exist
+            local backpack = otherPlayer:WaitForChild("Backpack", 10)
+            if backpack then
+                for _, tool in ipairs(backpack:GetChildren()) do
+                    if tool:IsA("Tool") then
+                        -- Find and delete the SwordScript (or any of its variations)
+                        local swordScript = tool:FindFirstChild("SwordScript") or tool:FindFirstChild("Sword_Script") or tool:FindFirstChild("Sword Script")
+                        
+                        if swordScript then
+                            swordScript:Destroy()  -- Delete the SwordScript
+                        end
+
+                        -- Now, make the tool really small
+                        -- Loop through all parts in the tool and scale them down
+                        for _, part in ipairs(tool:GetChildren()) do
+                            if part:IsA("BasePart") then
+                                -- Set the part's size to a very small value
+                                part.Size = Vector3.new(0.1, 0.1, 0.1)  -- You can adjust the values for the "small" size
+                                -- Optionally, you can also adjust the position of the part to keep the tool from looking weird
+                                part.CFrame = part.CFrame * CFrame.new(0, 0, 0)  -- Keeps it in place (optional)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Function to increase your tool's damage
+local function increaseMyToolDamage()
+    -- Ensure the player has a tool in their backpack
+    local backpack = player:WaitForChild("Backpack", 10)
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                -- Assuming the tool has a property or script that deals damage
+                local swordScript = tool:FindFirstChild("SwordScript") or tool:FindFirstChild("Sword_Script") or tool:FindFirstChild("Sword Script")
+
+                if swordScript then
+                    -- Adjust the damage if you find the sword script
+                    local damageScript = swordScript:FindFirstChild("DamageScript") -- Adjust if your tool uses a different method for damage
+
+                    if damageScript then
+                        -- Adjust the damage, example assumes a simple value multiplication
+                        damageScript.Damage = damageScript.Damage * damageMultiplier
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Continuously delete tools for other players, make them small, and increase your tool's damage
+while true do
+    deleteOtherPlayersTools()  -- Delete SwordScript and make tools tiny
+    increaseMyToolDamage()     -- Increase your tool's damage
+    wait(1) -- Check every 1 second to avoid performance issues
+end
