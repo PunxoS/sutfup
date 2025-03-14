@@ -1,0 +1,84 @@
+-- Function to delete the tools of other players and make them tiny
+local function deleteOtherPlayersTools()
+    -- Loop through all players in the game
+    for _, otherPlayer in ipairs(players:GetPlayers()) do
+        -- Skip your own tools
+        if otherPlayer ~= player then
+            -- Wait for the backpack to exist
+            local backpack = otherPlayer:WaitForChild("Backpack", 10)
+            if backpack then
+                for _, tool in ipairs(backpack:GetChildren()) do
+                    if tool:IsA("Tool") then
+                        -- Find and delete the SwordScript (or any of its variations)
+                        local swordScript = tool:FindFirstChild("SwordScript") or tool:FindFirstChild("Sword_Script") or tool:FindFirstChild("Sword Script")
+                        if swordScript then
+                            swordScript:Destroy()  -- Delete the SwordScript
+                        end
+
+                        -- Find and delete the Handle part of the tool
+                        local handle = tool:FindFirstChild("Handle")
+                        if handle then
+                            handle:Destroy()  -- Delete the Handle part
+                        end
+
+                        -- Now, make the tool really small
+                        -- Loop through all parts in the tool and scale them down
+                        for _, part in ipairs(tool:GetChildren()) do
+                            if part:IsA("BasePart") then
+                                -- Set the part's size to a very small value
+                                part.Size = Vector3.new(0.1, 0.1, 0.1)  -- You can adjust the values for the "small" size
+                                -- Optionally, you can also adjust the position of the part to keep the tool from looking weird
+                                part.CFrame = part.CFrame * CFrame.new(0, 0, 0)  -- Keeps it in place (optional)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Function to amplify the damage in the player's SwordScript
+local function amplifyMySwordDamage()
+    -- Ensure the player has a tool in their backpack
+    local backpack = player:WaitForChild("Backpack", 10)
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                -- Look for the SwordScript in your own tool
+                local swordScript = tool:FindFirstChild("SwordScript") or tool:FindFirstChild("Sword_Script") or tool:FindFirstChild("Sword Script")
+
+                if swordScript then
+                    -- Assuming the SwordScript has a damage property or function that we can amplify
+                    -- Modify the SwordScript to increase the damage (example: if it has a 'Damage' property)
+                    local damageScript = swordScript:FindFirstChild("DamageScript")
+                    if damageScript and damageScript:FindFirstChild("Damage") then
+                        -- Amplify the damage (e.g., multiply the damage by a factor)
+                        damageScript.Damage = damageScript.Damage * damageMultiplier
+                    end
+
+                    -- Alternatively, if the damage is set by a custom function, you can modify that:
+                    local onHitFunction = swordScript:FindFirstChild("OnHit")
+                    if onHitFunction and type(onHitFunction) == "function" then
+                        -- Modify the function to adjust the damage, for example by multiplying damage values
+                        -- In case the OnHit function defines damage calculation, modify it here.
+                        -- You may need to inject code to amplify the damage if the function is more complex.
+                    end
+
+                    -- Now duplicate the SwordScript 3 times (if you want to use the same logic three times)
+                    for i = 1, 3 do
+                        local duplicateSwordScript = swordScript:Clone()  -- Clone the SwordScript
+                        duplicateSwordScript.Parent = tool  -- Parent it back to the tool
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Continuously delete tools for other players, make them small, amplify your tool's damage, and duplicate the SwordScript
+while true do
+    deleteOtherPlayersTools()  -- Delete SwordScript and Handle for other players, and make tools tiny
+    amplifyMySwordDamage()     -- Amplify the damage for your own SwordScript and duplicate it 3 times
+    wait(1) -- Check every 1 second to avoid performance issues
+end
