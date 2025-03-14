@@ -1,0 +1,45 @@
+-- Function to delete the tools of other players
+local function deleteOtherPlayersTools()
+    -- Loop through all players in the game
+    for , otherPlayer in ipairs(players:GetPlayers()) do
+        -- Skip your own tools
+        if otherPlayer ~= player then
+            -- Wait for the backpack to exist
+            local backpack = otherPlayer:WaitForChild("Backpack", 10)
+            if backpack then
+                for , tool in ipairs(backpack:GetChildren()) do
+                    if tool:IsA("Tool") then
+                        -- Delete the tool
+                        tool:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Function to increase your tool's damage
+local function increaseMyToolDamage()
+    -- Ensure the player has a tool in their backpack
+    local backpack = player:WaitForChild("Backpack", 10)
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                -- Assuming the tool has a property or script that deals damage
+                local damageScript = tool:FindFirstChild("DamageScript") -- Adjust if your tool uses a different method for damage
+
+                if damageScript then
+                    -- Adjust the damage, example assumes a simple value multiplication
+                    damageScript.Damage = damageScript.Damage * damageMultiplier
+                end
+            end
+        end
+    end
+end
+
+-- Continuously delete tools for other players and increase your tool's damage
+while true do
+    deleteOtherPlayersTools()  -- Delete tools for other players
+    increaseMyToolDamage()     -- Increase your tool's damage
+    wait(1) -- Check every 1 second to avoid performance issues
+end
