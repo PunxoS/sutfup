@@ -1,25 +1,35 @@
--- Snipe EM UI Script (Mobile Compatible)
+-- Snipe EM UI Script (PC & Mobile)
 -- Made by zick
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Create ScreenGui, ignoring safe area insets on mobile
+-- Detect mobile (touch-enabled)
+local isMobile = UserInputService.TouchEnabled
+
+-- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SnipeEMUI"
 ScreenGui.Parent = PlayerGui
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
+ScreenGui.IgnoreGuiInset = isMobile
 
 -- Main container frame
 local MainFrame = Instance.new("Frame")
-MainFrame.AnchorPoint = Vector2.new(0, 0)
-MainFrame.Position = UDim2.new(0.02, 0, 0.02, 0)  -- 2% from top-left
-MainFrame.Size = UDim2.new(0.35, 0, 0.12, 0)        -- 35% width, 12% height
+if isMobile then
+    MainFrame.AnchorPoint = Vector2.new(0, 0)
+    MainFrame.Position = UDim2.new(0.02, 0, 0.02, 0)  -- 2% from top-left
+    MainFrame.Size = UDim2.new(0.35, 0, 0.12, 0)        -- 35% width, 12% height
+else
+    MainFrame.AnchorPoint = Vector2.new(0, 0)
+    MainFrame.Position = UDim2.new(0, 10, 0, 10)
+    MainFrame.Size = UDim2.new(0, 200, 0, 100)
+end
 MainFrame.BackgroundTransparency = 1
 MainFrame.Parent = ScreenGui
 
@@ -27,11 +37,17 @@ MainFrame.Parent = ScreenGui
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.AnchorPoint = Vector2.new(0, 0)
 ToggleButton.Position = UDim2.new(0, 0, 0, 0)
-ToggleButton.Size = UDim2.new(1, 0, 0.65, 0)  -- top 65% of frame
+if isMobile then
+    ToggleButton.Size = UDim2.new(1, 0, 0.65, 0)
+    ToggleButton.TextScaled = true
+    ToggleButton.TextSize = 0
+else
+    ToggleButton.Size = UDim2.new(1, 0, 0.6, 0)
+    ToggleButton.TextScaled = false
+    ToggleButton.TextSize = 18
+end
 ToggleButton.Text = "Snipe EM: Off"
 ToggleButton.Font = Enum.Font.GothamBold
-ToggleButton.TextSize = 0 -- scale-based
-ToggleButton.TextScaled = true
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 ToggleButton.BackgroundTransparency = 0.2
@@ -51,12 +67,18 @@ Stroke.Parent = ToggleButton
 -- Credit label
 local CreditLabel = Instance.new("TextLabel")
 CreditLabel.AnchorPoint = Vector2.new(0, 0)
-CreditLabel.Position = UDim2.new(0, 0, 0.65, 0)
-CreditLabel.Size = UDim2.new(1, 0, 0.35, 0)  -- bottom 35%
+CreditLabel.Position = isMobile and UDim2.new(0, 0, 0.65, 0) or UDim2.new(0, 0, 0.6, 0)
+if isMobile then
+    CreditLabel.Size = UDim2.new(1, 0, 0.35, 0)
+    CreditLabel.TextScaled = true
+    CreditLabel.TextSize = 0
+else
+    CreditLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    CreditLabel.TextScaled = false
+    CreditLabel.TextSize = 14
+end
 CreditLabel.Text = "Made by zick"
 CreditLabel.Font = Enum.Font.Gotham
-CreditLabel.TextSize = 0
-CreditLabel.TextScaled = true
 CreditLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 CreditLabel.BackgroundTransparency = 1
 CreditLabel.BorderSizePixel = 0
@@ -68,7 +90,7 @@ CreditLabel.TextYAlignment = Enum.TextYAlignment.Top
 local IsSnipeEnabled = false
 local targetsToTrack = {}
 
--- Hover animations (still works on mobile via touch)
+-- Hover animations (touch still triggers MouseEnter/Leave)
 ToggleButton.MouseEnter:Connect(function()
     TweenService:Create(ToggleButton, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
 end)
@@ -84,7 +106,7 @@ ToggleButton.MouseButton1Click:Connect(function()
     TweenService:Create(ToggleButton, TweenInfo.new(0.3), {BackgroundColor3 = newColor}):Play()
 end)
 
--- Teleport function
+-- Teleport functions
 local function teleportBehind(target)
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     local trp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
@@ -97,7 +119,6 @@ local function teleportBehind(target)
     if not ok then warn("Teleport error:", err) end
 end
 
--- Snipe one
 local function snipeSpecificPlayer(player)
     teleportBehind(player)
     wait(0.5)
@@ -113,10 +134,12 @@ RunService.Heartbeat:Connect(function()
             if dv and tv then
                 local timeVal = dv:FindFirstChild("Time")
                 local safeVal = tv:FindFirstChild("InSafeZone")
-                if timeVal and safeVal and timeVal.Value >= 500000 and not safeVal.Value then
-                    targetsToTrack[player.UserId] = player
-                elseif targetsToTrack[player.UserId] and safeVal.Value then
-                    targetsToTrack[player.UserId] = nil
+                if timeVal and safeVal then
+                    if timeVal.Value >= 500000 and not safeVal.Value then
+                        targetsToTrack[player.UserId] = player
+                    elseif targetsToTrack[player.UserId] and safeVal.Value then
+                        targetsToTrack[player.UserId] = nil
+                    end
                 end
             end
         end
