@@ -1,58 +1,62 @@
--- Snipe EM UI Script (Updated)
+-- Snipe EM UI Script (Mobile Compatible)
 -- Made by zick
 
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
--- Parent GUI to PlayerGui for local scripts
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Create ScreenGui
+-- Create ScreenGui, ignoring safe area insets on mobile
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SnipeEMUI"
 ScreenGui.Parent = PlayerGui
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
 
--- Create main frame for button and credits
+-- Main container frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 200, 0, 100)
-MainFrame.Position = UDim2.new(0, 10, 0, 10)
+MainFrame.AnchorPoint = Vector2.new(0, 0)
+MainFrame.Position = UDim2.new(0.02, 0, 0.02, 0)  -- 2% from top-left
+MainFrame.Size = UDim2.new(0.35, 0, 0.12, 0)        -- 35% width, 12% height
 MainFrame.BackgroundTransparency = 1
 MainFrame.Parent = ScreenGui
 
--- Create toggle button
+-- Toggle button
 local ToggleButton = Instance.new("TextButton")
-ToggleButton.Size = UDim2.new(1, 0, 0.6, 0)  -- occupies top 60% of frame
+ToggleButton.AnchorPoint = Vector2.new(0, 0)
 ToggleButton.Position = UDim2.new(0, 0, 0, 0)
+ToggleButton.Size = UDim2.new(1, 0, 0.65, 0)  -- top 65% of frame
 ToggleButton.Text = "Snipe EM: Off"
 ToggleButton.Font = Enum.Font.GothamBold
-ToggleButton.TextSize = 18
+ToggleButton.TextSize = 0 -- scale-based
+ToggleButton.TextScaled = true
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 ToggleButton.BackgroundTransparency = 0.2
 ToggleButton.BorderSizePixel = 0
 ToggleButton.Parent = MainFrame
 
--- Add rounded corners and outline to button
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = ToggleButton
+-- Rounded corners and outline
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 12)
+Corner.Parent = ToggleButton
 
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Thickness = 2
-UIStroke.Color = Color3.fromRGB(100, 100, 100)
-UIStroke.Parent = ToggleButton
+local Stroke = Instance.new("UIStroke")
+Stroke.Thickness = 2
+Stroke.Color = Color3.fromRGB(100, 100, 100)
+Stroke.Parent = ToggleButton
 
--- Create credit label
+-- Credit label
 local CreditLabel = Instance.new("TextLabel")
-CreditLabel.Size = UDim2.new(1, 0, 0.4, 0)  -- bottom 40%
-CreditLabel.Position = UDim2.new(0, 0, 0.6, 0)
+CreditLabel.AnchorPoint = Vector2.new(0, 0)
+CreditLabel.Position = UDim2.new(0, 0, 0.65, 0)
+CreditLabel.Size = UDim2.new(1, 0, 0.35, 0)  -- bottom 35%
 CreditLabel.Text = "Made by zick"
 CreditLabel.Font = Enum.Font.Gotham
-CreditLabel.TextSize = 14
+CreditLabel.TextSize = 0
+CreditLabel.TextScaled = true
 CreditLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 CreditLabel.BackgroundTransparency = 1
 CreditLabel.BorderSizePixel = 0
@@ -60,11 +64,11 @@ CreditLabel.Parent = MainFrame
 CreditLabel.TextWrapped = true
 CreditLabel.TextYAlignment = Enum.TextYAlignment.Top
 
--- State variables
+-- State
 local IsSnipeEnabled = false
 local targetsToTrack = {}
 
--- Button hover animations
+-- Hover animations (still works on mobile via touch)
 ToggleButton.MouseEnter:Connect(function()
     TweenService:Create(ToggleButton, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
 end)
@@ -76,30 +80,24 @@ end)
 ToggleButton.MouseButton1Click:Connect(function()
     IsSnipeEnabled = not IsSnipeEnabled
     ToggleButton.Text = "Snipe EM: " .. (IsSnipeEnabled and "On" or "Off")
-    local targetColor = IsSnipeEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(60, 60, 60)
-    TweenService:Create(ToggleButton, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+    local newColor = IsSnipeEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(60, 60, 60)
+    TweenService:Create(ToggleButton, TweenInfo.new(0.3), {BackgroundColor3 = newColor}):Play()
 end)
 
--- Teleport function: 1 stud behind with spin
-local function teleportBehind(targetPlayer)
-    local char = LocalPlayer.Character
-    local targetChar = targetPlayer.Character
-    if not (char and targetChar) then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local targetHRP = targetChar:FindFirstChild("HumanoidRootPart")
-    if not (hrp and targetHRP) then return end
-
-    local offset = targetHRP.CFrame.LookVector * -1
-    local newCFrame = targetHRP.CFrame * CFrame.new(offset)
-    local success, err = pcall(function()
-        hrp.CFrame = newCFrame * CFrame.Angles(0, tick() * 60, 0)
+-- Teleport function
+local function teleportBehind(target)
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local trp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+    if not (hrp and trp) then return end
+    local offset = trp.CFrame.LookVector * -1
+    local cf = trp.CFrame * CFrame.new(offset)
+    local ok, err = pcall(function()
+        hrp.CFrame = cf * CFrame.Angles(0, tick() * 60, 0)
     end)
-    if not success then
-        warn("Teleport error:", err)
-    end
+    if not ok then warn("Teleport error:", err) end
 end
 
--- Snipe one player
+-- Snipe one
 local function snipeSpecificPlayer(player)
     teleportBehind(player)
     wait(0.5)
@@ -108,25 +106,21 @@ end
 -- Main loop
 RunService.Heartbeat:Connect(function()
     if not IsSnipeEnabled then return end
-
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
-            local dataValues = player:FindFirstChild("DataValues")
-            local tempValues = player:FindFirstChild("TempValues")
-            if dataValues and tempValues then
-                local timeVal = dataValues:FindFirstChild("Time")
-                local safeVal = tempValues:FindFirstChild("InSafeZone")
-                if timeVal and safeVal then
-                    if timeVal.Value >= 500000 and not safeVal.Value then
-                        targetsToTrack[player.UserId] = player
-                    elseif targetsToTrack[player.UserId] and safeVal.Value then
-                        targetsToTrack[player.UserId] = nil
-                    end
+            local dv = player:FindFirstChild("DataValues")
+            local tv = player:FindFirstChild("TempValues")
+            if dv and tv then
+                local timeVal = dv:FindFirstChild("Time")
+                local safeVal = tv:FindFirstChild("InSafeZone")
+                if timeVal and safeVal and timeVal.Value >= 500000 and not safeVal.Value then
+                    targetsToTrack[player.UserId] = player
+                elseif targetsToTrack[player.UserId] and safeVal.Value then
+                    targetsToTrack[player.UserId] = nil
                 end
             end
         end
     end
-
     for uid, player in pairs(targetsToTrack) do
         if player and player.Parent then
             snipeSpecificPlayer(player)
